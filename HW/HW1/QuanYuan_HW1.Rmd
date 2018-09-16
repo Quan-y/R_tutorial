@@ -22,11 +22,11 @@ cat("The number of data rows is ", nrow(titanic))
 # (3) creat new variable called survived.word
 survive_word = ifelse(titanic['Survived'] == 0, 'dead', 'survived')
 titanic["Survived.Word"] <- survive_word
-head(titanic, 1)
+# head(titanic, 1)
 ```
 
 ### Part II: Exploring the Data in R
-```{r, include=TRUE}
+```{r}
 # (1) calculate the mean in survived, age, fare columns
 apply(titanic[,c('Survived', 'Age', 'Fare')], 2, mean)
 cat("The mean of survived is 0.383, which means the survival rate is very low. Only 3-4 survived among 10 people. The mean of Age is NA becasue Age column exists NA.")
@@ -35,7 +35,7 @@ cat("The mean of survived is 0.383, which means the survival rate is very low. O
 fsurvive = factor(titanic[,'Survived'])
 fsex = factor(titanic[,'Sex'])
 summary_2 = summary(split(titanic[,'PassengerId'], list(fsurvive, fsex)))
-print(summary_2)
+cat(summary_2)
 prob1 = as.numeric(summary_2[2])/nrow(titanic)
 prob1 = round(prob, 2)
 cat("the proportion of female passengers who survived the titanic disaster is ", prob1)
@@ -44,4 +44,6 @@ cat("the proportion of female passengers who survived the titanic disaster is ",
 prob2 = as.numeric(summary_2[2])/(as.numeric(summary_2[2]) + as.numeric(summary_2[4]))
 prob2 = round(prob2, 2)
 cat("Of the survivors, the proportion of female passengers is ", prob2)
+
+
 ```
