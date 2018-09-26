@@ -21,8 +21,9 @@ cat("number of columns", dim(housing)[2])
 ```{r}
 apply(is.na(housing), 2, sum)
 ```
-**Answer: **is.nan(housing) return a bool matrix(True for nan, False for not nan)  
-2 indicates columns, sum means we use sum function apply to each column
+**Answer: **is.na(housing) return a bool matrix(True for nan, False for not nan)  
+2 indicates columns, sum means we use sum function apply to each column. The command counts the number of values that are missing in each column.
+
 #### (4) Remove the rows of the dataset for which the variable Value is NA
 ```{r}
 row.has.na <- apply(housing, 1, function(x){any(is.na(x))})
@@ -42,6 +43,9 @@ summary(housing['logValue'])
 # cat('mean', mean(housing['logValue']))
 # cat('max', max(housing['logValue']))
 ```
+
+**Answer: **The minimum is 10.06, median is 14.65, mean is 14.65, maximum is 20.22.
+
 #### (7) Create a new variable in the dataset called logUnits that is equal to the logarithm of the number of units in the property. The number of units in each piece of property is stored in the variable UnitCount.
 ```{r}
 housing['logUnits'] <- log(housing$UnitCount)
@@ -57,15 +61,62 @@ housing$after1950 <- ifelse(housing$YearBuilt >= 1950, TRUE, FALSE)
 ```{r}
 plot(housing$logUnits, housing$logValue, xlab = 'log(Units)', ylab = 'log(Value)', main = 'Relationship between log Units and log Value')
 ```
+
 #### (2) Make the same plot as above, but now include the argument col = factor(housing$after1950). Describe this plot and the covariation between the two variables. What does the coloring in the plot tell us?
 ```{r}
 plot(housing$logUnits, housing$logValue, col = factor(housing$after1950), xlab = 'log(Units)', ylab = 'log(Value)', main = 'Relationship between log Units and log Value')
 legend("bottomright", legend = levels(factor(housing$after1950)), fill = unique(factor(housing$after1950)))
 ```
-**Answer: **the property was built in or after 1950 have more units and more expensive.
+
+**Answer: **the property was built in or after 1950 have more units and more expensive.  
+
 #### (3) The cor() function calculates the correlation coefficient between two variables. What is the correlation between property logValue and property logUnits in (i) the whole data, (ii) just Manhattan (iii) just Brooklyn (iv) for properties built after 1950 (v) for properties built before 1950?
 ```{r}
-
+# the whole dataset
+cat('the whole dataset ',cor(housing$logValue, housing$logUnits))
+# just Manhattan
+cat('just Manhattan ', cor(housing[housing$Borough == "Manhattan", "logValue"], housing[housing$Borough == "Manhattan", "logUnits"]))
+# just Brooklyn
+cat('just Brooklyn ', cor(housing[housing$Borough == "Brooklyn", "logValue"], housing[housing$Borough == "Brooklyn", "logUnits"]))
+# for properties built after 1950
+cat('properties built after 1950 ', cor(housing$logValue[housing$YearBuilt > 1950],housing$logUnits[housing$YearBuilt > 1950]))
+# for properties built before 1950
+cat('properties built before 1950 ', cor(housing$logValue[housing$YearBuilt < 1950],housing$logUnits[housing$YearBuilt < 1950]))
 ```
+
+#### (4) Make a single plot showing property logValue against property logUnits for Manhattan and Brooklyn. When creating this plot, clearly distinguish the two boroughs.
+
+```{r}
+MB_housing = housing[housing$Borough == "Manhattan" | housing$Borough == "Brooklyn", ]
+plot(MB_housing$logUnits, MB_housing$logValue, col = factor(MB_housing$Borough), xlab = 'log(Units)', ylab = 'log(Value)', main = 'Relationship between log Units and log Value')
+legend("bottomright", legend = levels(factor(MB_housing$Borough)), fill = unique(factor(MB_housing$Borough)))
+```
+
+#### (5) Make a single plot showing property logValue against property logUnits for Manhattan and Brooklyn. When creating this plot, clearly distinguish the two boroughs.
+
+```{r}
+median(housing[housing$Borough == "Manhattan", "Value"],na.rm = TRUE)
+```
+
+#### (6) Make side-by-side box plots comparing property logValue across the five boroughs.
+```{r}
+# Boxplot
+boxplot(logValue~Borough, data = housing, main = "boxplot logValue across the five boroughs", xlab = "Borough", ylab = "logValue")
+```
+
+#### (7) For five boroughs, what are the median property values? (Use Value here, not logValue.)
+```{r}
+# method 1
+cat('method 1', sep = '\n')
+tapply(housing$Value, housing$Borough, median)
+# method 2
+cat('method 2', sep = '\n')
+for (each_borough in unique(housing$Borough)) {
+  cat(each_borough, median(housing[housing$Borough == each_borough, "Value"],na.rm = TRUE), sep="\n")
+}
+```
+
+
+
 
 
