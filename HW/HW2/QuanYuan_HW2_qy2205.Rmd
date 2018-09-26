@@ -1,0 +1,71 @@
+---
+title: "Homework 2"
+---
+#### Author: Quan Yuan
+#### UNI: qy2205
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Part I: Loading and Cleaning data in R
+
+#### (1) Load the data into a dataframe called housing.
+```{r}
+housing <- read.csv("NYChousing.csv")
+```
+#### (2) How many rows and columns does the dataframe have?
+```{r}
+cat("number of rows", dim(housing)[1])
+cat("number of columns", dim(housing)[2])
+```
+#### (3) Run this command, and explain, in words, what this does
+```{r}
+apply(is.na(housing), 2, sum)
+```
+**Answer: **is.nan(housing) return a bool matrix(True for nan, False for not nan)  
+2 indicates columns, sum means we use sum function apply to each column
+#### (4) Remove the rows of the dataset for which the variable Value is NA
+```{r}
+row.has.na <- apply(housing, 1, function(x){any(is.na(x))})
+housing <- housing[!row.has.na,]
+```
+#### (5) How many rows did you remove with the previous call? Does this agree with your result
+```{r}
+cat('The number of rows I remove with the previous call ', sum(row.has.na))
+cat('This agree with my result')
+```
+#### (6) Create a new variable in the dataset called logValue that is equal to the logarithm of the property's Value. What are the minimum, median, mean, and maximum values of logValue?
+```{r}
+housing['logValue'] <- log(housing$Value)
+summary(housing['logValue'])
+# cat('minimum', min(housing['logValue']))
+# cat('median', median(housing['logValue']))
+# cat('mean', mean(housing['logValue']))
+# cat('max', max(housing['logValue']))
+```
+#### (7) Create a new variable in the dataset called logUnits that is equal to the logarithm of the number of units in the property. The number of units in each piece of property is stored in the variable UnitCount.
+```{r}
+housing['logUnits'] <- log(housing$UnitCount)
+```
+
+#### (8) Finally create a new variable in the dataset called after1950 which equals TRUE if the property was built in or after 1950 and FALSE otherwise. You'll want to use the YearBuilt variable here. This can be done in a single line of code.
+```{r}
+housing$after1950 <- ifelse(housing$YearBuilt >= 1950, TRUE, FALSE)
+```
+
+## Part II: EDA
+#### (1) Plot property logValue against property logUnits. Name the x and y labels of the plot appropriately. logValue should be on the y-axis.
+```{r}
+plot(housing$logUnits, housing$logValue, xlab = 'log(Units)', ylab = 'log(Value)', main = 'Relationship between log Units and log Value')
+```
+#### (2) Make the same plot as above, but now include the argument col = factor(housing$after1950). Describe this plot and the covariation between the two variables. What does the coloring in the plot tell us?
+```{r}
+plot(housing$logUnits, housing$logValue, col = factor(housing$after1950), xlab = 'log(Units)', ylab = 'log(Value)', main = 'Relationship between log Units and log Value')
+legend("bottomright", legend = levels(factor(housing$after1950)), fill = unique(factor(housing$after1950)))
+```
+**Answer: **the property was built in or after 1950 have more units and more expensive.
+#### (3) The cor() function calculates the correlation coefficient between two variables. What is the correlation between property logValue and property logUnits in (i) the whole data, (ii) just Manhattan (iii) just Brooklyn (iv) for properties built after 1950 (v) for properties built before 1950?
+```{r}
+
+```
+
+
