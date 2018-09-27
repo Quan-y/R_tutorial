@@ -26,12 +26,14 @@ apply(is.na(housing), 2, sum)
 
 #### (4) Remove the rows of the dataset for which the variable Value is NA
 ```{r}
-row.has.na <- apply(housing, 1, function(x){any(is.na(x))})
-housing <- housing[!row.has.na,]
+# row.has.na <- apply(housing, 1, function(x){any(is.na(x))})
+# housing <- housing[!row.has.na,]
+orglen_housing = dim(housing)[1]
+housing <- housing[!is.na(housing$Value),]
 ```
 #### (5) How many rows did you remove with the previous call? Does this agree with your result
 ```{r}
-cat('The number of rows I remove with the previous call ', sum(row.has.na))
+cat('The number of rows I remove with the previous call ', orglen_housing - dim(housing)[1])
 cat('This agree with my result')
 ```
 #### (6) Create a new variable in the dataset called logValue that is equal to the logarithm of the property's Value. What are the minimum, median, mean, and maximum values of logValue?
@@ -44,7 +46,7 @@ summary(housing['logValue'])
 # cat('max', max(housing['logValue']))
 ```
 
-**Answer: **The minimum is 10.06, median is 14.65, mean is 14.65, maximum is 20.22.
+**Answer: **The minimum is 8.41, median is 13.75, mean is 13.68, maximum is 20.47.
 
 #### (7) Create a new variable in the dataset called logUnits that is equal to the logarithm of the number of units in the property. The number of units in each piece of property is stored in the variable UnitCount.
 ```{r}
@@ -59,7 +61,7 @@ housing$after1950 <- ifelse(housing$YearBuilt >= 1950, TRUE, FALSE)
 ## Part II: EDA
 #### (1) Plot property logValue against property logUnits. Name the x and y labels of the plot appropriately. logValue should be on the y-axis.
 ```{r}
-plot(housing$logUnits, housing$logValue, xlab = 'log(Units)', ylab = 'log(Value)', main = 'Relationship between log Units and log Value')
+plot(housing$logUnits, housing$logValue, xlab = 'Logarithm of the number of Units', ylab = 'Logarithm of the property¡¯s Value', main = 'Relationship between log Units and log Value')
 ```
 
 #### (2) Make the same plot as above, but now include the argument col = factor(housing$after1950). Describe this plot and the covariation between the two variables. What does the coloring in the plot tell us?
