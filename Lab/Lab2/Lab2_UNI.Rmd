@@ -1,8 +1,10 @@
 ---
 title: "Lab 2"
-author: "Enter Your Name and UNI Here"
+author: "Quan Yuan qy2205"
 date: "September 24, 2018"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 ```{r, echo = FALSE}
@@ -18,11 +20,19 @@ Before the lab is due, make sure that you upload a knitted HTML or pdf file to t
 
 ```{r}
 # You'll want to type your response to question A(1) here.  Your response should look like:
+# Of course, your answer should not be commented out.
+
+# You'll want to type your response to question A(1) here. Your response should look like:
 # setwd("~/Desktop/Data/")
 # diamonds <- read.csv("diamonds_small.csv", as.is = TRUE, header = TRUE)
-# rows       <- dim(diamonds)[1]
+# rows <- dim(diamonds)[1]
 # diamonds <- diamonds[sample(1:rows, 2000), ]
 # Of course, your answer should not be commented out.
+
+diamonds <- read.csv("diamonds_small.csv", as.is = TRUE, header = TRUE)
+lm0 = lm(diamonds$price~diamonds$carat)
+cat('Coefficient of carat: ', lm0$coefficients[2])
+cat('Intercept: ', lm0$coefficients[1])
 ```
 
 Recall from lecture that the estimates $\hat{\beta}_0$ and $\hat{\beta}_1$ that you just calculated with **lm()** are functions of the data values and are therefore themselves are random (they inherit variability from the data).  If we were to recollect the diamonds data over and over again, the estimates would be different each time.
@@ -42,14 +52,14 @@ Strategy:  we'll re-sample **(price, carat)** pairs in order to provide an estim
 
 ```{r}
 # You'll want to type your response to question B(1) here.  Your response should look like:
-# n <- 
-# n
+n <- dim(diamonds)[1]
+cat('The number of rows in the diamonds dataset: ', n)
 ```
 
 2) We'll next use the **sample()** function to re-sample **n** rows of the **diamonds** dataset *with replacement*.  The following code provides a single re-sample of the values $1, 2, \ldots, n$, or a single re-sample of the rows of the dataset.
 
 ```{r}
-# resample1 <- sample(1:n, n, replace = TRUE)
+resample1 <- sample(1:n, n, replace = TRUE)
 # Remove the comment symbol in front of the above after n is assigned in B(1)
 ```
 
@@ -57,19 +67,19 @@ Now write a loop to calculate **B <- 1000** such re-samples and store them as ro
 
 ```{r}
 # You'll want to type your response to question B(2) here.  Your response should look like:
-# B <- 1000
-# resampled_values <- matrix(NA, nrow = B, ncol = n)
-# for (b in 1:B) {
-#   Write code that fills in the matrix resample_values with re-samples.
-# }
+B <- 1000
+resampled_values <- matrix(NA, nrow = B, ncol = n)
+for (b in 1:B) {
+  resampled_values[b,] <- sample(1:n, n, replace = TRUE)
+}
 ```
 
 3) Now we'll use each re-sampled dataset to provide a new estimate of $\hat{\beta}_1$.  Write a line of code that uses **resample1** above to produce a resamples dataset of **(price, carat)** pairs.  Using the re-sampled dataset, use **lm()** to produce new estimates of $\hat{\beta}_0$ and $\hat{\beta}_1$.  These values should be stored in a vector called **resample1_ests**.
 
 ```{r}
 # You'll want to type your response to question B(3) here.  Your response should look like:
-# resample1_ests <- 
-# resample1_ests
+resample1_ests <- lm(diamonds[resample1,]$price~diamonds[resample1,]$carat)$coefficients
+resample1_ests
 ```
 
 Hint: (a) Note that the following code produces the re-sampled dataset from the re-sampled values:
@@ -84,12 +94,15 @@ Hint: (b) You'll probably want to use the **coefficients()** function.
 
 ```{r}
 # You'll want to type your response to question B(4) here.  Your response should look like:
-# resampled_ests <- matrix(NA, nrow = B, ncol = 2)
-# names(resampled_ests) <- c("Intercept_Est", "Slope_Est")
-# for (b in 1:B) {
-#   Write code that fills in the matrix resample_ests with coefficent estimates.
-# }
-# head(resampled_ests)
+resampled_ests <- matrix(NA, nrow = B, ncol = 2)
+names(resampled_ests) <- c("Intercept_Est", "Slope_Est")
+for (b in 1:B) {
+  data <- diamonds[resampled_values[b,],]
+  ests <- lm(data$price~data$carat)$coefficients
+  resampled_ests[b, 1] <- ests[1]
+  resampled_ests[b, 2] <- ests[2]
+}
+head(resampled_ests)
 ```
 
 Hint: You may want to use multiple lines of code within the for loop.  One idea is to first use the rows corresponding to re-sample **b** provided in **resampled_values** to created a resampled dataset.  Then use the new dataset to provide new estimates of the coefficients.
@@ -100,19 +113,24 @@ Make a vector **diff_estimates** that holds the differences between the original
 
 ```{r}
 # You'll want to type your response to question B(5) here.  Your response should look like:
-# diff_estimates <-
+diff_estimates <- resampled_ests[,2] - lm0$coefficients[2]
 ```
 
 6) Plot a histogram of the bootstrap estimates of $\hat{\beta}_1$ (they're in the `Slope_Est' column).  Label the x-axis appropriately.
 
 ```{r}
 # You'll want to type your response to question B(6) here.
+hist(resampled_ests[,2], main = 'histogram of the bootstrap estimates of slope', xlab = 'slope estimate', ylab = 'frequency')
 ```
 
 7) Calculate the standard deviation of the bootstrap estimates.
 
 ```{r}
 # You'll want to type your response to question B(7) here.
+sd_slope = sd(resampled_ests[,2])
+sd_intercept = sd(resampled_ests[,1])
+cat('the standard deviation of the slope', sd_slope)
+cat('the standard deviation of the intercept', sd_intercept)
 ```
 
 # Part (C): Bootstrap Confidence Intervals
@@ -130,10 +148,10 @@ We estimate the confidence interval from the bootstrap estimates by finding a ra
 
 ```{r}
 # You'll want to type your response to question C(1) here.  Your response should look like:
-# Cl <-
-# Cu <- 
-# int <- c(Cl, Cu)
-# int
+Cl <- 2*lm0[[1]][[2]]-quantile(resampled_ests[,2], probs = 0.975)
+Cu <- 2*lm0[[1]][[2]]-quantile(resampled_ests[,2], probs = 0.025)
+int <- c(Cl, Cu)
+int
 ```
 
 (2) Instead if traditional  bootstrap intervals, construct **percentile** based bootstrap intervals.  Use the **quantile()** function to find the $0.025$ and $0.975$ quantiles of the vector **resampled_ests[, "Slope_Est"]** calculated in B(4). 
