@@ -1,0 +1,15 @@
+---
+title: "R_review"
+author: "Quan Yuan"
+date: "2018-10-06"
+output: html_document
+---
+```{r}
+# Variable Types, Vectors, Matrices
+# numeric, complex, character, logical
+x1 <- 2
+cat(typeof(x))
+x2 <- as.integer(x)
+x3 <- as.double(x)
+cat(typeof(x), cat(mode(x)))
+```
