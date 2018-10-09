@@ -1,0 +1,111 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+# Homework 3
+**UNI:** qy2205  
+**Name:** Quan Yuan  
+**Email:** quan.yuan@columbia.edu  
+
+#### i Save source code into a html file
+
+#### ii Use the readLines() command we studied in class to load the NetsSchedule1819.html file into a character vector in R. Call the vector nets1819.
+##### (a) How many lines are in the NetsSchedule1819.html file?
+##### (b) What is the total number of characters in the file?
+##### (c) What is the maximum number of characters in a single line of the file?
+```{r}
+nets1819 <- readLines('NetsSchedule1819.html', warn = FALSE)
+cat('the number of lineas in NetsSchedule1819.html ', length(nets1819))
+cat('the total number of characters ', sum(nchar(nets1819)))
+cat('the maximum number of characters ', max(nchar(nets1819)))
+```
+#### iii Who and when are they playing first? Who and when are they playing last?
+```{r}
+cat('First: Detroit 7:00PM Wed, Oct 17')
+cat('Last: Miami 8:00PM Wed, Apr 10')
+```
+#### iv What line in the file holds information about the game of the regular season (date, time, opponent)?
+```{r}
+cat('Line 64 contains all the information including date, time and opponent')
+```
+#### v Write a regular expression to extract the line that contains the time, location, and opponent of all games.
+```{r}
+# we use the date "Wed, Oct 17" to index the line
+data_pattern <- "Wed, Oct 17"
+data <- nets1819[grep(data_pattern, nets1819)]
+```
+
+#### vi Write a regular expression to split the whole line into 82 lines, with each line displaying the information of one game.
+```{r}
+# we use <td class="Table2__td"><span>') to split the whole string
+# since the first element is irrelevant
+data <- strsplit(data, '<td class="Table2__td"><span>')[[1]][2:83]
+cat('The length of the data is ', length(data))
+```
+
+#### vii Write a regular expression that will capture the date of the game. Then using the grep() function find the lines in the file that correspond to the games. Make sure that grep() finds 82 lines, and the first and last locations grep() finds match the first and last games you found in (ii).
+```{r}
+pattern_date <- '[A-Za-z]{3}, [A-Za-z]{3} [0-9]{1,2}'
+date_grep <- grep(pattern_date, data)
+cat('The length of data after grep: ',length(date_grep))
+# check
+# first game
+cat('First game Match: ', regmatches(data[1], regexpr(pattern_date, data[1])) == "Wed, Oct 17")
+# first game
+cat('Last game Match: ', regmatches(data[82], regexpr(pattern_date, data[82])) == "Wed, Apr 10")
+```
+
+#### viii Using the expression you wrote in (vii) along with the functions regexpr() and regmatches(), extract the dates from the text file. Store this information in a vector called date to save to use below.
+```{r}
+# viii date
+matches_date <- gregexpr(pattern = pattern_date, text = data[date_grep])
+date <- regmatches(data[date_grep], matches_date)
+date <- unlist(date, use.names = FALSE)
+date
+```
+
+#### ix create a time vector that stores the time of the game.
+```{r}
+# time
+pattern_time <- '[0-9]+:[0-9]{2} PM'
+time_grep <- grep(pattern_time, data)
+matches_time <- gregexpr(pattern = pattern_time, text = data[time_grep])
+time <- regmatches(data[time_grep], matches_time)
+time <- unlist(time, use.names = FALSE)
+time
+```
+
+#### x create a home vector
+```{r}
+# home(vs) or away(@)
+pattern_homeaway <- '<span class=\"pr2\">(vs|@)'
+homeaway_grep <- grep(pattern_homeaway, data)
+matches_time <- gregexpr(pattern = pattern_homeaway, text = data[homeaway_grep])
+home <- regmatches(data[homeaway_grep], matches_time)
+home <- ifelse(home == "<span class=\"pr2\">vs", 1, 0)
+home
+```
+
+#### xi Finally we would like to find the opponent, again capture this information using a regular expression. Extract these values and save them to a vector called opponent. Again, to write your regular expression you may want to use the HTML code around the names to guide your search.
+```{r}
+# xi opponent
+pattern_opponent <- "[A-Za-z ]+<!-- --> </a></span></div></td>"
+opponent_grep <- grep(pattern_opponent, data)
+matches_opponent <- gregexpr(pattern = pattern_opponent, text = data[opponent_grep])
+opponent <- regmatches(data[opponent_grep], matches_opponent)
+opponent <- sapply(opponent, function (x) {strsplit(x, "<!-- --> </a></span></div></td>")})
+opponent <- unlist(opponent, use.names = FALSE)
+opponent
+```
+
+#### xii Construct a data frame of the four variables in the following order: date, time, opponent, home. Print the frame from rows 1 to 10 Does the data match the first 10 games as seen from the web browser?
+```{r}
+# xii dataframe
+df <- data.frame(date, time, opponent, home)
+head(df, 10)
+```
+
+
+
+

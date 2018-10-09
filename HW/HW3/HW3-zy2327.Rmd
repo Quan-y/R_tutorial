@@ -1,0 +1,131 @@
+---
+title: "HW3"
+author: "Zeyu Yang, zy2327"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## i Save source code into a html file
+```{r}
+# setwd("/Users/zeyu/Google Drive/School/Statistical Computing & Introduction to DataScience GR5206_003/Homeworks/HW3")
+```
+The source code has saved as _NetsSchedule1819.html_ in the above folder. 
+And it is checked that it can be opened in text editor.
+
+## ii
+```{r}
+# Read Data
+nets1819 <- readLines('NetsSchedule1819.html', warn = FALSE)
+```
+
+```{r}
+#a
+l <- length(nets1819)
+cat("There are",l,"lines.")
+#b
+n <- sum(nchar(nets1819))
+cat("There are",n,"characters.")
+#c
+m <- max(nchar(nets1819))
+cat("The maximum number of characters in a single line of the file is",m,".")
+```
+
+## iii
+They will play with Detriot first at 7:00PM Wed, Oct 17.
+
+They will play with Miami last at 8:00PM Wed, Apr 10.
+
+## iv
+_Line 64_ in the file holds information about the game of the regular season.
+This line starts with
+```
+                <div id="espnfitt"><div class="bp-mobileMDPlus bp-mobileLGPlus bp-tabletPlus bp-desktopPlus bp-desktopLGPlus" data-fitt-page-type="teamSchedule" data-reactroot=""><div id="espn-analytics">
+```
+
+Ends with:
+```
+<div id="fittOverlayContainerInner" data-box-type="fitt-adbox-overlay"><div class="Ad ad-slot" data-slot-type="overlay" data-out-of-page="true" data-slot-kvps="pos=outofpage"></div></div></div></div></div></div></div></div>
+```
+## v
+```{r}
+# Use the first game date to extract the line
+line_pattern <- "Wed, Oct 17"
+#Extract the line
+line <- nets1819[grep(line_pattern,nets1819)]
+```
+
+## vi
+```{r}
+# Around the end of each row, there will be a "Schedule__ticket". So we can use these characters to split the line
+line1 <- strsplit(line, split = "Schedule__ticket")
+# Since there are some redundant codes in the last part, we may remove it.
+line2 <- line1[[1]][1:(length(line1[[1]])-1)]
+cat("The line had split into",length(line2),"rows.")
+```
+```{r}
+#Alternative Method
+#pattern <- "<tr class=\"Table2__tr Table2__tr--sm Table2__even\" data-idx=\"[0-9]{1,2}\">.+?</a></td></tr>"
+#line1 <-  regmatches(line,gregexpr(pattern,line)) 
+```
+
+## vii
+```{r}
+# Create pattern
+date_pattern <- "[A-Z][a-z][a-z],\\s[A-Z][a-z][a-z]\\s[0-9]{1,2}"
+#Find lines
+day <- grep(date_pattern, line2)
+cat("There is",length(day),"lines.")
+# Match first game
+cat("Match the first game:", regmatches(line2[1],regexpr(date_pattern,line2[day[1]])) == "Wed, Oct 17")
+# Match last game
+cat("Macth the last game:",regmatches(line2[82],regexpr(date_pattern,line2[day[82]])) == "Wed, Apr 10")
+```
+
+## viii
+```{r}
+#Extract the dates and store it into vector date
+date <- regmatches(line2[day],regexpr(date_pattern,line2[day]))
+date
+```
+
+## ix Store the time of game
+```{r}
+# Create pattern
+time_pattern <- "[0-9]{1,2}:[0-9][0-9]\\s[A|P]M"
+#Extract the time and store it into vector time
+time <- regmatches(line2,regexpr(time_pattern,line2))
+time
+```
+
+## x Home/Away
+```{r}
+pattern <- "<span class=\"pr2\">(@|vs)"
+#Extract information
+home1 <- regmatches(line2,regexpr(pattern,line2))
+home <- ifelse(home1=="<span class=\"pr2\">vs",1,0)
+home
+```
+
+## xi Opponent
+```{r}
+pattern <- "\">.{1,20}<!-- --> </a></span></div></td>"
+temp <- regmatches(line2,regexpr(pattern, line2))
+temp1 <- strsplit(temp, split = ">|<")
+opponent <- c()
+for(i in 1:length(temp1))
+{
+  opponent <- c(opponent,temp1[[i]][2])
+}
+opponent
+```
+
+## xii
+```{r}
+Schedule <- data.frame(date,time,opponent,home)
+head(Schedule,10)
+```
+
+Yes, it matches the first 10 rows.

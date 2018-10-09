@@ -13,10 +13,12 @@ output: html_document
 # x3 <- as.double(x)
 # cat(typeof(x), cat(mode(x)))
 
-for (i in seq(10)){
-  if (i%%2 == 0) {
-    print(i)
-  }
+test <- function (x, k = 5) {
+  return(K*sum(x))
+}
+
+test2 <- function (x) {
+  return(x**2)
 }
 
 ```
