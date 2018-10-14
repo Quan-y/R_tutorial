@@ -20,5 +20,35 @@ test <- function (x, k = 5) {
 test2 <- function (x) {
   return(x**2)
 }
+```
+
+```{r}
+gmp <- read.table('gmp.txt', sep = ' ')
+est.scaling.exponent <- function (beta, beta_0 = 6611, response = gmp$pcgmp, 
+                                  predictor = gmp$pop, max.iter = 100, 
+                                  stop.deriv = 0.01,
+                                  deriv.step = 0.001, step.scale = 1e-15) {
+  iter <- 0
+  deriv <- Inf
+  sse <- function (b) {sum((response - beta_0*predictor^b)^2)}
+  for (i in 1:max.iter) {
+    iter <- iter + 1
+    deriv <- (sse(beta + deriv.step) - sse(beta))/deriv.step
+    beta <- beta - step.scale*deriv
+    if (abs(deriv) < stop.deriv) {break()}
+  }
+  fit <- list(beta = beta, iteration = iter,
+              converged = (iter < max.iter))
+  return(fit)
+}
+est.scaling.exponent(0.01)
+
+
+
 
 ```
+
+
+
+
+
