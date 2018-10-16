@@ -1,0 +1,150 @@
+---
+title: "R Mid-term"
+output:
+  html_document:
+    df_print: paged
+---
+### 1. apply family
+```{r}
+data <- matrix(c(1:10, 21:30), nrow = 5, ncol = 4)
+# (1) apply
+cat('apply')
+data
+apply(data, 1, mean) # calculate mean by ros (1, 6, 21, 26)
+# (2) lapply: input list, return list
+data <- list(x = 1:5, y = 6:10, z = 11:15)
+data
+lapply(data, FUN = median)
+# (3) sapply: return a vector if available
+# value: unname(sapply(data, FUN = median))
+# name: names(sapply(data, FUN = median))
+sapply(data, FUN = median)
+# (4) tapply: splits the array based on specified data, usually factor levels and then applies the function to it
+library(datasets)
+tapply(mtcars$wt, mtcars$cyl, mean)
+# (5) mapply
+x <- 1:5
+b <- 6:10
+mapply(sum, x, b)
+```
+### 2. ifelse
+```{r}
+test <- seq(1, 10, 2)
+ifelse(test > 3, 1, 0)
+```
+### 3. plot
+```{r}
+plot(x = mtcars$mpg, y = mtcars$qsec, col = factor(mtcars$cyl), xlab = 'mpg', ylab = 'hp', main = 'mpg~hp')
+legend('topright', legend = levels(factor(mtcars$cyl)), fill = unique(factor(mtcars$cyl)))
+```
+### 4. Web Scraping
+```{r}
+reg_data <- function (pattern, data) {
+  sgrep <- grep(pattern, data)
+  matches <- gregexpr(pattern = pattern, text = data[sgrep])
+  reg.data <- unlist(regmatches(data[sgrep], matches), use.names = FALSE)
+  return(reg.data)
+}
+```
+
+### 5. strsplit
+```{r}
+# split
+strsplit(c('234, 124', '234, 987'), split = ',')
+# sapply (join)
+sapply(strsplit(c('234, 124', '234, 987'), split = ','), paste, collapse = '')
+```
+### 6. algo
+```{r}
+# (1) regression
+# data
+gmp <- read.table('gmp.txt', as.is = TRUE, header = TRUE)
+gmp$pop <- gmp$gmp/gmp$pcgmp
+# fit model: Y = 6611X^beta + eps
+# Initial point beta0. Approximate the derivative w.r.t. beta and move in the opposite direction
+# step 1: SSE(beta0)  = sum((Y - 6611X**beta0)**2)
+# step 2: SSE'(beta0) = (SSE(beta0 + h) - SSE(beta0))/h
+# step 3: beta1 = beta0 - c*SSE'(beta0)
+est.scaling.exponent <- function(beta, beta_0 = 6611,
+                        response = gmp$pcgmp, predictor = gmp$pop,
+                        max.iter = 100, stop.deriv = .01, deriv.step = .001,
+                        step.scale =1e-15) {
+  iter <- 0
+  deriv <- Inf
+  sse <- function(b) {sum((response - beta_0*predictor^b)^2)}
+  for (i in 1:max.iter) {
+    iter <- iter + 1
+    deriv <- (sse(beta + deriv.step) - sse(beta))/deriv.step
+    beta <- beta - step.scale*deriv
+    if (abs(deriv) < stop.deriv) {break()}
+    }
+  fit <- list(beta = beta, iteration = iter,
+              converged = (iter < max.iter))
+  return(fit)
+}
+est.scaling.exponent(beta = 0.2, max.iter = 1000, deriv.step = .002)
+
+# (2) KNN
+# data
+Congress_train <- read.csv("Congress_train.csv")
+# function
+KNN.decision.reg <- function(newX, K = 5, 
+                             data = Congress_train,
+                             nameX = 'Year', 
+                             nameY = 'Rating') {
+  # calculate distance
+  dists <- sqrt((data[nameX] - newX)^2)
+  # find neighbors
+  neighbors  <- order(dists)[1:K]
+  neighb.dir <- data[neighbors, 'Rating']
+  return(mean(neighb.dir))
+  # choice <- names(which.max(table(neighb.dir)))
+  # return(choice)
+}
+KNN.decision.reg(newX = 2000)
+```
+### 7. split/apply/combine
+```{r}
+strike <- read.csv("strikes.csv", as.is = TRUE)
+# (1) linear reg and plot
+italy.strikes <- subset(strikes, country == "Italy")
+# fit
+italy.fit <- lm(strike.volume ~ left.parliament, data = italy.strikes)
+# plot
+plot(strike.volume~left.parliament, data = italy.strikes, main = "Italy Strike Volume Versus Leftwing Alignment", ylab = "Strike volume", xlab = "Leftwing Alignment")
+# add line
+abline(italy.fit, col = 2)
+
+# (2) run regression based on different country
+my.strike.lm <- function(country.df) {
+  return(lm(strike.volume ~ left.parliament,
+            data = country.df)$coeff)
+}
+# split
+strikes.split <- split(strikes, strikes$country)
+# fit
+strike.coef <- sapply(strikes.split[1:12], my.strike.lm)
+# plot
+plot(1:ncol(strike.coef), strike.coef[2, ], xaxt = "n", xlab = "", ylab = "Regression coefficient", main="Countrywise labor activity by leftwing score")
+axis(side = 1, at = 1:ncol(strike.coef), labels = colnames(strike.coef), las = 2, cex.axis = 0.5)
+abline(h = 0, col = "grey")
+
+# (3) plyr package
+# a*ply(.data, .margins(1), .fun, ...), aaply: array; adply: dataframe; alply: list
+
+# l*ply(.data, .fun, ...), .data: list, .fun: the function to be applied to each element
+# laply: array; ldply: data frame; llply: list
+
+# a_ply or l_ply
+# par(mfrow = c(3, 3), mar = c(4, 4, 1, 1))
+# a_ply(my.array, 2:3, plot, ylim = range(my.array),pch = 19, col = 6)
+
+# d*ply(.data, .variables, .fun, ...) input dataframe
+# daply, ddply, dlply
+strike.coef.a <- ddply(strikes, .(country), my.strike.lm)
+head(strike.coef.a)
+```
+
+
+
+
