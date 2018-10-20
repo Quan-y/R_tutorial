@@ -52,7 +52,7 @@ reg_data <- function (pattern, data) {
 # split
 strsplit(c('234, 124', '234, 987'), split = ',')
 # sapply (join)
-sapply(strsplit(c('234, 124', '234, 987'), split = ','), paste, collapse = '')
+sapply(strsplit(c('234, 124', '234, 987'), split = ', '), paste, collapse = '')
 ```
 ### 6. algo
 ```{r}
