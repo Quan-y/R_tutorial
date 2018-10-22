@@ -1,0 +1,61 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+# Homework 3
+**UNI:** qy2205  
+**Name:** Quan Yuan  
+**Email:** qy2205@columbia.edu  
+
+
+```{r}
+debt <- read.csv("debt.csv", as.is = TRUE)
+dim(debt)
+head(debt)
+```
+### 1
+```{r}
+# (a)
+library(plyr)
+mean.growth <- function (data){
+  return(mean(data$growth))
+}
+# (b)
+signif(daply(debt, .(Country), mean.growth), 3)
+```
+#### Report: the average GDP growth rates is highest in Japan and lowest in UK. Austria, Jpan and Portugal have high average GPA growth rate (above 4). UK, Greece and Denmark have low GPA growth rate (below 3).
+
+### 2
+```{r}
+each.year.ave.growth <- signif(daply(debt, .(Year), mean.growth), 3)
+each.year.ave.growth
+```
+```{r}
+year <- as.numeric(names(each.year.ave.growth))
+year.ave.gdp <- unname(each.year.ave.growth)
+plot(year, year.ave.gdp, xlab = 'Year', ylab = 'Average GDP', main = 'the average GDP growth rate for each year')
+```
+### 3
+```{r}
+# (a)
+cat('the correlation coeffcient between GDP growth and the debt ratio over the whole data set', signif(cor(debt$growth, debt$ratio), 4))
+# (b)
+debt.gdp.cor <- function (data) {
+  return(cor(data$growth, data$ratio))
+}
+cor.country <- daply(debt, .(Country), debt.gdp.cor)
+cor.country
+cat('The mean of correlations (country)', signif(mean(cor.country),4))
+hist(unname(cor.country), breaks = 10, xlab = 'correlations')
+# (c)
+cor.year <- daply(debt, .(Year), debt.gdp.cor)
+cor.year
+cat('The mean of correlations (year)', signif(mean(cor.year),4))
+hist(unname(cor.year), breaks = 10, xlab = 'correlations')
+# (d)
+cat('Country: Norway has very high positive corr, Jpan and Germany have high negative corr')
+cat('Year: 1946 and 1957 have high negative corr, 1978 has high positive corr')
+```
+
+
