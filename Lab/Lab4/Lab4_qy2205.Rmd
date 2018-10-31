@@ -1,10 +1,10 @@
 ---
 title: "Lab 4"
-author: "Enter Your Name and UNI Here"
+author: "Eric Yuan, qy2205"
 date: "October 23, 2018"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r, echo = FALSE}
@@ -39,7 +39,31 @@ abline(lm(Weekly$Today~Weekly$Lag1),col="red")
 boxplot(Weekly$Lag1~Weekly$Direction,main="Returns",ylab="One Week Ago",xlab="Direction")
 ```
 
+```{r, echo = FALSE}
+par(mfrow=c(2,3))
+## Scatterplot Lag 1
+plot(Weekly$Lag1, Weekly$Today, main="Returns", xlab="One Weeks Ago", ylab="Today")
+abline(lm(Weekly$Today~Weekly$Lag1),col="red")
 
+## Scatterplot Lag 2
+plot(Weekly$Lag2, Weekly$Today, main="Returns", xlab="Two Weeks Ago", ylab="Today")
+abline(lm(Weekly$Today~Weekly$Lag2),col="red")
+
+## Scatterplot Lag 3
+plot(Weekly$Lag3, Weekly$Today, main="Returns", xlab="Three Weeks Ago", ylab="Today")
+abline(lm(Weekly$Today~Weekly$Lag3),col="red")
+
+## Scatterplot Lag 4
+plot(Weekly$Lag4, Weekly$Today, main="Returns", xlab="Four Weeks Ago", ylab="Today")
+abline(lm(Weekly$Today~Weekly$Lag4),col="red")
+
+## Scatterplot Lag 5
+plot(Weekly$Lag5, Weekly$Today, main="Returns", xlab="Five Weeks Ago", ylab="Today")
+abline(lm(Weekly$Today~Weekly$Lag5),col="red")
+
+## Boxplot Lag 5
+boxplot(Weekly$Lag1~Weekly$Direction,main="Returns",ylab="One Week Ago",xlab="Direction")
+```
 
 # Part 2: Building a classifier
 
@@ -68,9 +92,73 @@ Recall the KNN procedure.  We classify a new point with the following steps:
 }
 ```
 
+** New KNN
+```{r}
+KNN.decision <- function(newpoint, K = 5, Lag = Weekly[,2:6]) {
+   n <- nrow(Lag)
+   # check valid input
+   stopifnot(length(newpoint) == 5, K <= n)
+   # distance
+   dists <- sqrt(rowSums((Lag - newpoint)**2))
+   # order distance
+   neighbors  <- order(dists)[1:K]
+   neighb.dir <- Weekly$Direction[neighbors]
+   choice      <- names(which.max(table(neighb.dir)))
+   return(choice)
+}
+
+KNN.decision(newpoint = c(0.1,0.1,0.1,0.1,0.1), Lag = Weekly[,2:6])
+```
 3. Now train your model using data from 1990 - 2008 and use the data from 2009-2010 as test data.  To do this, divide the data into two data frames, *test* and *train*.  Then write a loop that iterates over the test points in the test dataset calculating a prediction for each based on the training data with $K=5$.  Save these predictions in a vector.  Finally, calculate your test error, which you should store as a variable named *test.error*.  The test error calculates the proportion of your predictions which are incorrect (don't match the actual directions).
 
+```{r}
+# Notice that we random select train dataset 80%, test dataset 20%
+# if we just want to use the train dataset from 1990-2008, test dataset from 2009-2010
+# just run the following code and comment the following prepare data part
+
+train <- Weekly[Weekly$Year <= 2008 & Weekly$Year >= 1990, ]
+test <- Weekly[Weekly$Year >= 2009 & Weekly$Year <= 2010, ]
+
+# --------------------------- prepare data --------------------------- #
+# # get train size
+# trainSize <- floor(nrow(Weekly)*0.8)
+# # get train id
+# train_ind <- sample(seq_len(nrow(Weekly)), size = trainSize, replace = FALSE, prob = NULL)
+# # train id
+# train <- Weekly[train_ind, ]
+# # test id
+# test <- Weekly[-train_ind, ]
+# ------------------------- KNN classification ------------------------ #
+# train
+KNN.decision <- function(newpoint, K, Lag = train[,2:6]) {
+   n <- nrow(Lag)
+   # check valid input
+   stopifnot(length(newpoint) == 5, K <= n)
+   # distance
+   dists <- colSums((apply(Lag, 1, "-", newpoint))^2)
+   # cat(dists)
+   # order distance
+   neighbors  <- order(dists)[1:K]
+   neighb.dir <- train$Direction[neighbors]
+   choice      <- names(which.max(table(neighb.dir)))
+   return(choice)
+}
+
+# test
+modelResult <- apply(test[,2:6], 1, KNN.decision, K = 5, Lag = train[,2:6])
+realResult <- test$Direction
+# test error
+sum(!modelResult == realResult)/nrow(test)
+```
+
 4. Do the same thing as in question 3, but instead use $K=3$.  Which has a lower test error?
+```{r}
+# test
+modelResult2 <- apply(test[,2:6], 1, KNN.decision, K = 3, Lag = train[,2:6])
+# test error
+sum(!modelResult2 == realResult)/nrow(test)
+```
+**Answer: when k = 3, the test error is lower
 
 # Part 3: Cross-validation
 
@@ -83,6 +171,79 @@ We'll run a $9$-fold cross-validation in the following.  Note that we have 1089 
 
 5. Create a vector *fold* which has $n$ elements, where $n$ is the number of rows in *Weekly*.  We'd like for the *fold* vector to take values in 1-9 which assign each corresponding row of the *Weekly* dataset to a fold.  Do this in two steps: (1) create a vector using *rep()* with the values 1-9 each repeated 121 times (note $1089 = 121 \cdot 9$), and (2) use *sample()* to randomly reorder the vector you created in (1).
 
+```{r}
+# create vector
+flodVec <- rep(1:9,121)
+# random order
+rand.flodVec <- sample(flodVec, size = nrow(Weekly), replace = FALSE)
+```
+
 6. Iterate over the $9$ folds, treating a different fold as the test set and all others the training set in each iteration.    Using a KNN classifier with $K=5$ calculate the test error for each fold.  Then calculate the cross-validation approximation to the test error which is the average of ERR1, ERR2, ..., ERR9.
 
+```{r}
+new.KNN.decision <- function(newpoint, itrain, K = 5) {
+   # n <- nrow(train)
+   # # check valid input
+   # stopifnot(length(newpoint) == 5, K <= n)
+   # distance
+   dists <- colSums((apply(itrain[,1:5], 1, "-", newpoint))^2)
+   # dists <- sqrt(rowSums((itrain[,1:5] - newpoint)**2))
+   # order distance
+   neighbors  <- order(dists)[1:K]
+   neighb.dir <- etrain$Direction[neighbors]
+   choice      <- names(which.max(table(neighb.dir)))
+   return(choice)
+}
+
+test.score <- function(etrain, etest, model = new.KNN.decision, para = 5){
+   # test
+   modelResult <- apply(etest[,1:5], 1, model, para, itrain = etrain)
+   realResult <- etest$Direction
+   # test error
+   return((nrow(etest) - sum(modelResult==realResult))/nrow(etest))
+}
+
+new.Weekly <- Weekly[,c(2:6, 9)]
+new.Weekly$fold = rand.flodVec
+# k-fold test
+total.ERR <- 0
+for (i in 1:9){
+  etrain <- new.Weekly[new.Weekly$fold != i, 1:6]
+  etest <- new.Weekly[new.Weekly$fold == i, 1:6]
+  total.ERR = total.ERR + test.score(etrain, etest)
+}
+# average error
+cat('average test error', total.ERR/9)
+```
+
 7. Repeat step (6) for $K = 1$, $K=3$, and $K=7$.  For which set is the cross-validation approximation to the test error the lowest?
+```{r}
+# ----------------------------- K = 1 ----------------------------- #
+ERR <- c()
+for (i in 1:9){
+  etrain <- new.Weekly[new.Weekly$fold != i, 1:6]
+  etest <- new.Weekly[new.Weekly$fold == i, 1:6]
+  ERR <- c(ERR, test.score(etrain, etest, model = new.KNN.decision, para = 1))
+}
+# average error
+cat('average test error when K = 1', mean(ERR))
+# ----------------------------- K = 3 ----------------------------- #
+ERR <- c()
+for (i in 1:9){
+  etrain <- new.Weekly[new.Weekly$fold != i, 1:6]
+  etest <- new.Weekly[new.Weekly$fold == i, 1:6]
+  ERR <- c(ERR, test.score(etrain, etest, model = new.KNN.decision, para = 3))
+}
+# average error
+cat('average test error when K = 3', mean(ERR))
+# ----------------------------- K = 7 ----------------------------- #
+ERR <- c()
+for (i in 1:9){
+  etrain <- new.Weekly[new.Weekly$fold != i, 1:6]
+  etest <- new.Weekly[new.Weekly$fold == i, 1:6]
+  ERR <- c(ERR, test.score(etrain, etest, model = new.KNN.decision, para = 7))
+}
+# average error
+cat('average test error when K = 7', mean(ERR))
+```
+**Answer: when K = 5, the test error is the lowest
